@@ -6,6 +6,14 @@ plugins {
 group = 'ru.nsu'
 version = '1.0-SNAPSHOT'
 
+jar {
+  manifest {
+    attributes(
+      'Main-Class': 'ru.nsu.Main'
+    )
+  }
+}
+
 repositories {
     mavenCentral()
 }
