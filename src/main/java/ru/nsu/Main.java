@@ -4,52 +4,59 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import ru.nsu.Options;
 
 public class Main {
-    private static List<Path> inputPaths = new ArrayList<>();
+    private static final List<Path> inputPaths = new ArrayList<>();
     private static Path outputPath = Path.of("./");
-    private static boolean appendMode = false;
     private static boolean fullMode = false;
     private static String prefix = "";
 
-    public static void main(String[] args) {
-        System.out.printf("Hello and welcome! " + args.length + "\n");
+    static StandardOpenOption[] openOptions = {
+            StandardOpenOption.CREATE,
+            StandardOpenOption.WRITE
+    };
 
+    public static void main(String[] args) {
         if (args.length > 0) {
             parseArgs(args);
         } else {
             System.out.println("No arguments provided.");
             System.exit(0);
         }
-        FileSeparator fileSeparator = createFileSeparator();
-        if (fileSeparator == null) {
-            System.exit(1); // Can't do anything without fileSeparator
-        }
 
-        for (Path inputPath : inputPaths) {
-            if (appendMode) {
-                fileSeparator.processFile(inputPath, StandardOpenOption.APPEND);
-            } else {
-                fileSeparator.processFile(inputPath);
+        try (FileSeparator fileSeparator = createFileSeparator();) {
+            if (fileSeparator == null) {
+                System.exit(1); // Can't do anything without fileSeparator
             }
-        }
 
-        if (fullMode) {
-            System.out.printf(fileSeparator.getIntegerStats().toString() + "\n" +
-                              fileSeparator.getFloatStats().toString() + "\n" +
-                              fileSeparator.getStringStats().toString() + "\n");
+            for (Path inputPath : inputPaths) {
+                try {
+                    fileSeparator.processFile(inputPath);
+                } catch (Exception e) {
+                    if (fullMode) {
+                        System.err.println("Error processing file: " + e.getMessage());
+                    }
+                }
+            }
+
+            if (fullMode) {
+                System.out.printf(fileSeparator.getIntegerStats().toString() + "\n" +
+                        fileSeparator.getFloatStats().toString() + "\n" +
+                        fileSeparator.getStringStats().toString() + "\n");
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
         }
     }
 
-    // Calls `System.exit(1)` the program on invalid arguments
+    // Calls System.exit(1) on invalid arguments
     private static void parseArgs(String[] args) {
         for (int i = 0; i < args.length; i++) {
-            System.out.println(i + ". = " + args[i]);
-
-            if (!Options.isOption(args[i])) { // Arg is input file
+            if (!Options.isOption(args[i])) { // Arg is an input file
                 Path path = Path.of(args[i]);
 
                 if (!path.toFile().exists()) {
@@ -77,17 +84,14 @@ public class Main {
                     outputPath = Path.of(args[++i]);
                 }
                 case Options.APPEND -> {
-                    appendMode = true;
+                    // Keep [] array to pass as StandardOpenOption... parameter for writer
+                    StandardOpenOption[] tmpOpenOptions = Arrays.copyOf(openOptions, openOptions.length + 1);
+                    tmpOpenOptions[tmpOpenOptions.length - 1] = StandardOpenOption.APPEND;
+                    openOptions = tmpOpenOptions;
                 }
-                case Options.SHORT -> {
-                    fullMode = false;
-                }
-                case Options.FULL -> {
-                    fullMode = true;
-                }
-                default -> {
-                    System.err.println("Unknown argument: " + args[i]);
-                }
+                case Options.SHORT -> fullMode = false;
+                case Options.FULL -> fullMode = true;
+                default -> System.err.println("Unknown argument: " + args[i]);
             }
         }
     }
@@ -97,7 +101,8 @@ public class Main {
             return new FileSeparator(
                 getOutputFilePath("integers.txt"),
                 getOutputFilePath("floats.txt"),
-                getOutputFilePath("strings.txt")
+                getOutputFilePath("strings.txt"),
+                openOptions
             );
         } catch (InvalidPathException e) {
             System.err.println("Error: " + e.getMessage());
