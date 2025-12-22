@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import ru.nsu.Options;
-
 public class Main {
     private static final List<Path> inputPaths = new ArrayList<>();
     private static Path outputPath = Path.of("./");
@@ -29,23 +27,18 @@ public class Main {
             }
         } else {
             System.out.println("No arguments provided.");
-            System.out.println("Usage: java -jar text-filter.jar [-p prefix] [-o output_path] [-a] [-s] [-f] input_file1 [input_file2 ...]");
+            System.out.println(
+                    "Usage: java -jar text-filter.jar " +
+                    "[-p prefix] [-o output_path] [-a] [-s] [-f] input_file1 [input_file2 ...]");
             System.exit(0);
         }
-
-        startTextFiltering();
+        startTextFiltering(); // Main program logic
     }
 
     private static void startTextFiltering() {
         try (FileSeparator fileSeparator = createFileSeparator();) {
             for (Path inputPath : inputPaths) {
-                try {
-                    fileSeparator.processFile(inputPath);
-                } catch (Exception e) {
-                    if (fullMode) {
-                        System.err.println("Error processing file: " + e.getMessage());
-                    }
-                }
+                fileSeparator.processFile(inputPath);
             }
             // Printing stats
             if (fullMode) {
@@ -53,8 +46,10 @@ public class Main {
                         fileSeparator.getFloatStats().toString() + "\n" +
                         fileSeparator.getStringStats().toString() + "\n");
             }
+        } catch (InvalidPathException e) {
+            System.err.println("Invalid path format: " + e.getMessage() + ".");
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            System.err.println("Error: " + e.getMessage() + ".");
         }
     }
 
@@ -72,7 +67,9 @@ public class Main {
                     }
                     case Options.OUTPUT_PATH -> {
                         if (i + 1 >= args.length || Options.isOption(args[i + 1])) {
-                            System.err.println("Error: '-o' requires a value. Using current directory as output path (by default).");
+                            System.err.println(
+                                    "Error: '-o' requires a value. " +
+                                    "Using current directory as output path (by default).");
                             continue;
                         }
                         outputPath = Path.of(args[++i]);
@@ -90,7 +87,7 @@ public class Main {
             } else { // Arg is an input file
                 Path path = Path.of(args[i]);
                 if (!path.toFile().exists()) {
-                    System.err.println("Error: file " + path + " does not exist. Skipping to next file if exists.");
+                    System.err.println("Error: file " + path + " does not exist. Skipping.");
                     continue;
                 }
                 inputPaths.add(Path.of(args[i]));

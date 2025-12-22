@@ -1,6 +1,7 @@
 package ru.nsu;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,13 +25,27 @@ public class LineWriter implements AutoCloseable {
     public void write(Class<?> type, String value) throws IOException {
         BufferedWriter writer = writerMap.get(type);
         if (writer == null) {
-            Path path = pathsMap.get(type);
-            Files.createDirectories(path.getParent());
-            writerMap.put(type, Files.newBufferedWriter(pathsMap.get(type), openOptions));
-            writer = writerMap.get(type);
+            writer = addWriter(type);
         }
         writer.write(value);
         writer.newLine(); // System specific line separator
+    }
+
+    private BufferedWriter addWriter(Class<?> type) throws IOException {
+        Path path = pathsMap.get(type);
+        File file = path.toFile();
+        Files.createDirectories(path.getParent());
+
+        if (file.exists() && file.canWrite()) {
+            writerMap.put(type, Files.newBufferedWriter(pathsMap.get(type), openOptions));
+            return writerMap.get(type);
+        } else {
+            if (file.exists()) {
+                throw new IOException("File " + file.getAbsolutePath() + " is not writable");
+            } else {
+                throw new IOException("Failed to create file " + file.getAbsolutePath());
+            }
+        }
     }
 
     @Override
