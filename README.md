@@ -18,8 +18,27 @@
 
 # Сборка и запуск
 
-Gradle 9.2.0
+## Требования
+
+**Java 25+** (OpenJDK 25+ или совместимые)  
+Проверить активную версию можно командой `java -version`.
+
+## Сборка
+
+Используется Gradle 9.2.0.
 ```shell
 ./gradlew build
-./gradlew run
+```
+
+При необходимости дать права на исполнение.
+```shell
+chamod +x ./gradlew
+```
+
+После сборки .jar файл будет находиться в `./build/libs`.
+
+## Запуск
+
+```shell
+java -jar ./build/libs/TextFilter.jar [-p prefix] [-o output_path] [-a] [-s] [-f] input_file1 [input_file2 ...]
 ```

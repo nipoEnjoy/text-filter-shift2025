@@ -52,11 +52,6 @@ public class FileSeparator implements AutoCloseable {
     private void writeLine(Class<?> type, String value, int lineNumber) {
         try {
             writer.write(Integer.class, value);
-        } catch (IOException e) {
-            System.err.println(
-                    "IO error while writing " + type.getSimpleName() +
-                    " at line " + lineNumber + ": " + value +
-                    " (" + e.getMessage() + ")");
         } catch (Exception e) {
             System.err.println(
                     "Error while writing " + type.getSimpleName() +

@@ -28,7 +28,7 @@ public class Main {
         } else {
             System.out.println("No arguments provided.");
             System.out.println(
-                    "Usage: java -jar text-filter.jar " +
+                    "Usage: java -jar TextFilter.jar " +
                     "[-p prefix] [-o output_path] [-a] [-s] [-f] input_file1 [input_file2 ...]");
             System.exit(0);
         }

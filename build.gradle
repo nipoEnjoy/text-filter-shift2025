@@ -4,14 +4,13 @@ plugins {
 }
 
 group = 'ru.nsu'
-version = '1.0-SNAPSHOT'
 
 jar {
-  manifest {
-    attributes(
-      'Main-Class': 'ru.nsu.Main'
-    )
-  }
+    manifest {
+        attributes(
+            'Main-Class': 'ru.nsu.Main'
+        )
+    }
 }
 
 repositories {
@@ -19,14 +18,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
 application {
     mainClass = 'ru.nsu.Main'
-}
-
-test {
-    useJUnitPlatform()
 }
