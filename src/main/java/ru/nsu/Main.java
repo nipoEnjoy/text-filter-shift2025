@@ -23,16 +23,21 @@ public class Main {
     public static void main(String[] args) {
         if (args.length > 0) {
             parseArgs(args);
+            if (inputPaths.isEmpty()) {
+                System.out.println("No correct input files provided.");
+                System.exit(0);
+            }
         } else {
             System.out.println("No arguments provided.");
+            System.out.println("Usage: java -jar text-filter.jar [-p prefix] [-o output_path] [-a] [-s] [-f] input_file1 [input_file2 ...]");
             System.exit(0);
         }
 
-        try (FileSeparator fileSeparator = createFileSeparator();) {
-            if (fileSeparator == null) {
-                System.exit(1); // Can't do anything without fileSeparator
-            }
+        startTextFiltering();
+    }
 
+    private static void startTextFiltering() {
+        try (FileSeparator fileSeparator = createFileSeparator();) {
             for (Path inputPath : inputPaths) {
                 try {
                     fileSeparator.processFile(inputPath);
@@ -42,7 +47,7 @@ public class Main {
                     }
                 }
             }
-
+            // Printing stats
             if (fullMode) {
                 System.out.printf(fileSeparator.getIntegerStats().toString() + "\n" +
                         fileSeparator.getFloatStats().toString() + "\n" +
@@ -53,61 +58,53 @@ public class Main {
         }
     }
 
-    // Calls System.exit(1) on invalid arguments
     private static void parseArgs(String[] args) {
         for (int i = 0; i < args.length; i++) {
-            if (!Options.isOption(args[i])) { // Arg is an input file
+            if (Options.isOption(args[i])) {
+                Options option = Options.getOption(args[i]);
+                switch (option) {
+                    case Options.PREFIX -> {
+                        if (i + 1 >= args.length || Options.isOption(args[i + 1])) {
+                            System.err.println("Error: '-p' requires a value. Using no prefix (by default).");
+                            continue;
+                        }
+                        prefix = args[++i];
+                    }
+                    case Options.OUTPUT_PATH -> {
+                        if (i + 1 >= args.length || Options.isOption(args[i + 1])) {
+                            System.err.println("Error: '-o' requires a value. Using current directory as output path (by default).");
+                            continue;
+                        }
+                        outputPath = Path.of(args[++i]);
+                    }
+                    case Options.APPEND -> {
+                        // Keep [] array to pass as StandardOpenOption... parameter to writer
+                        StandardOpenOption[] tmpOpenOptions = Arrays.copyOf(openOptions, openOptions.length + 1);
+                        tmpOpenOptions[tmpOpenOptions.length - 1] = StandardOpenOption.APPEND;
+                        openOptions = tmpOpenOptions;
+                    }
+                    case Options.SHORT -> fullMode = false;
+                    case Options.FULL -> fullMode = true;
+                    default -> System.err.println("Unknown argument: " + args[i]);
+                }
+            } else { // Arg is an input file
                 Path path = Path.of(args[i]);
-
                 if (!path.toFile().exists()) {
-                    System.err.println("Error: file " + path + " does not exist.");
-                    System.exit(1); // Can't do anything without input file
+                    System.err.println("Error: file " + path + " does not exist. Skipping to next file if exists.");
+                    continue;
                 }
                 inputPaths.add(Path.of(args[i]));
-                continue;
-            }
-
-            Options option = Options.getOption(args[i]);
-            switch (option) {
-                case Options.PREFIX -> {
-                    if (i + 1 >= args.length || Options.isOption(args[i + 1])) {
-                        System.err.println("Error: '-p' requires a value.");
-                        System.exit(1);
-                    }
-                    prefix = args[++i];
-                }
-                case Options.OUTPUT_PATH -> {
-                    if (i + 1 >= args.length || Options.isOption(args[i + 1])) {
-                        System.err.println("Error: '-o' requires a value.");
-                        System.exit(1);
-                    }
-                    outputPath = Path.of(args[++i]);
-                }
-                case Options.APPEND -> {
-                    // Keep [] array to pass as StandardOpenOption... parameter for writer
-                    StandardOpenOption[] tmpOpenOptions = Arrays.copyOf(openOptions, openOptions.length + 1);
-                    tmpOpenOptions[tmpOpenOptions.length - 1] = StandardOpenOption.APPEND;
-                    openOptions = tmpOpenOptions;
-                }
-                case Options.SHORT -> fullMode = false;
-                case Options.FULL -> fullMode = true;
-                default -> System.err.println("Unknown argument: " + args[i]);
             }
         }
     }
 
-    private static FileSeparator createFileSeparator() {
-        try {
-            return new FileSeparator(
-                getOutputFilePath("integers.txt"),
-                getOutputFilePath("floats.txt"),
-                getOutputFilePath("strings.txt"),
-                openOptions
-            );
-        } catch (InvalidPathException e) {
-            System.err.println("Error: " + e.getMessage());
-            return null;
-        }
+    private static FileSeparator createFileSeparator() throws InvalidPathException{
+        return new FileSeparator(
+            getOutputFilePath("integers.txt"),
+            getOutputFilePath("floats.txt"),
+            getOutputFilePath("strings.txt"),
+            openOptions
+        );
     }
 
     private static Path getOutputFilePath(String fileName) throws InvalidPathException {
