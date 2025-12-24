@@ -10,12 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class LineWriter implements AutoCloseable {
+public class WriteController implements AutoCloseable {
     private final Map<Class<?>, Path> pathsMap = new HashMap<>();
     private final Map<Class<?>, BufferedWriter> writerMap = new HashMap<>();
     private final StandardOpenOption[] openOptions;
 
-    public LineWriter(Path integerFilePath, Path floatFilePath, Path stringFilePath, StandardOpenOption... openOptions) {
+    public WriteController(Path integerFilePath, Path floatFilePath, Path stringFilePath, StandardOpenOption... openOptions) {
         pathsMap.put(Integer.class, Objects.requireNonNull(integerFilePath));
         pathsMap.put(Float.class, Objects.requireNonNull(floatFilePath));
         pathsMap.put(String.class, Objects.requireNonNull(stringFilePath));

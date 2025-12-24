@@ -1,5 +1,9 @@
 package ru.nsu;
 
+import ru.nsu.stats.FloatStats;
+import ru.nsu.stats.IntegerStats;
+import ru.nsu.stats.StringStats;
+
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -40,14 +44,12 @@ public class Main {
             for (Path inputPath : inputPaths) {
                 fileSeparator.processFile(inputPath);
             }
-            // Printing stats
-            if (fullMode) {
-                System.out.printf(fileSeparator.getIntegerStats().toString() + "\n" +
-                        fileSeparator.getFloatStats().toString() + "\n" +
-                        fileSeparator.getStringStats().toString() + "\n");
-            }
+            printStats(
+                    fileSeparator.getIntegerStats(),
+                    fileSeparator.getFloatStats(),
+                    fileSeparator.getStringStats());
         } catch (InvalidPathException e) {
-            System.err.println("Invalid path format: " + e.getMessage() + ".");
+            System.err.println("Error: Invalid path format: " + e.getMessage() + ".");
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage() + ".");
         }
@@ -102,6 +104,49 @@ public class Main {
             getOutputFilePath("strings.txt"),
             openOptions
         );
+    }
+
+    private static void printStats(IntegerStats integerStats, FloatStats floatStats, StringStats stringStats) {
+        System.out.println(buildIntegerStatsString(integerStats));
+        System.out.println(buildFloatStatsString(floatStats));
+        System.out.println(buildStringStatsString(stringStats));
+    }
+
+    private static String buildIntegerStatsString(IntegerStats stats) {
+        StringBuilder stringBuilder = new StringBuilder()
+                .append("Integer stats:\n")
+                .append("\t- Count: " + stats.getCount() + "\n");
+        if (fullMode) {
+            stringBuilder
+                    .append("\t- Sum: " + stats.getSum() + "\n")
+                    .append("\t- Max value: " + stats.getMaxValue() + "\n")
+                    .append("\t- Min value: " + stats.getMinValue() + "\n");
+        }
+        return stringBuilder.toString();
+    }
+
+    private static String buildFloatStatsString(FloatStats stats) {
+        StringBuilder stringBuilder = new StringBuilder()
+                .append("Float stats:\n")
+                .append("\t- Count: " + stats.getCount() + "\n");
+        if (fullMode) {
+            stringBuilder
+                    .append("\t- Sum: " + stats.getSum() + "\n")
+                    .append("\t- Max value: " + stats.getMaxValue() + "\n")
+                    .append("\t- Min value: " + stats.getMinValue() + "\n");
+        }
+        return stringBuilder.toString();
+    }
+
+    private static String buildStringStatsString(StringStats stats) {
+        StringBuilder stringBuilder = new StringBuilder()
+                .append("String stats:\n")
+                .append("\t- Count: " + stats.getCount() + "\n");
+        if (fullMode) {
+            stringBuilder
+                    .append("\t- Max length: " + stats.getMaxLength() + "\n");
+        }
+        return stringBuilder.toString();
     }
 
     private static Path getOutputFilePath(String fileName) throws InvalidPathException {

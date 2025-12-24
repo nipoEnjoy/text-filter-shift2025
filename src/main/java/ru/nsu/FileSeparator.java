@@ -14,10 +14,10 @@ public class FileSeparator implements AutoCloseable {
     public final FloatStats floatStats = new FloatStats();
     private final StringStats stringStats = new StringStats();
 
-    private final LineWriter writer;
+    private final WriteController writeController;
 
     public FileSeparator(Path integerOutput, Path floatOutput, Path stringOutput, StandardOpenOption... options) {
-        this.writer = new LineWriter(integerOutput, floatOutput, stringOutput, options);
+        this.writeController = new WriteController(integerOutput, floatOutput, stringOutput, options);
     }
 
     public void processFile(Path inputFile) {
@@ -29,14 +29,10 @@ public class FileSeparator implements AutoCloseable {
 
                 if (isFloat(line)) {
                     writeLine(Float.class, line, lineNumber);
-                    addToStats(Float.class, line);
-                }
-                else if (isNumeric(line)) {
+                } else if (isNumeric(line)) {
                     writeLine(Integer.class, line, lineNumber);
-                    addToStats(Float.class, line);
                 } else { // String
                     writeLine(String.class, line, lineNumber);
-                    addToStats(String.class, line);
                 }
                 lineNumber++;
             }
@@ -51,13 +47,14 @@ public class FileSeparator implements AutoCloseable {
 
     private void writeLine(Class<?> type, String value, int lineNumber) {
         try {
-            writer.write(Integer.class, value);
+            writeController.write(Integer.class, value);
         } catch (Exception e) {
             System.err.println(
                     "Error while writing " + type.getSimpleName() +
                     " at line " + lineNumber + ": " + value +
-                    " (" + e.getMessage() + ")");
+                    " (" + e.getMessage() + "). Skipping this file.");
         }
+        addToStats(type, value);
     }
 
     private void addToStats(Class<?> type, String value) {
@@ -93,8 +90,8 @@ public class FileSeparator implements AutoCloseable {
 
     @Override
     public void close() {
-        if (writer != null) {
-            writer.close();
+        if (writeController != null) {
+            writeController.close();
         }
     }
 
