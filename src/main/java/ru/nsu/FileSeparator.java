@@ -47,7 +47,7 @@ public class FileSeparator implements AutoCloseable {
 
     private void writeLine(Class<?> type, String value, int lineNumber) {
         try {
-            writeController.write(Integer.class, value);
+            writeController.write(type, value);
         } catch (Exception e) {
             System.err.println(
                     "Error while writing " + type.getSimpleName() +
@@ -78,7 +78,7 @@ public class FileSeparator implements AutoCloseable {
                         "Dropped from stats: " + value);
             } else if (type == Integer.class) {
                 System.err.println(
-                        "Invalid number format or number is too big for int. " +
+                        "Invalid number format or number is too big for integer. " +
                         "Dropped from stats: " + value);
             } else { // String
                 System.err.println(

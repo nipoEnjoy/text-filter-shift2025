@@ -12,7 +12,7 @@ import java.util.Objects;
 
 public class WriteController implements AutoCloseable {
     private final Map<Class<?>, Path> pathsMap = new HashMap<>();
-    private final Map<Class<?>, BufferedWriter> writerMap = new HashMap<>();
+    private final Map<Class<?>, BufferedWriter> writersMap = new HashMap<>();
     private final StandardOpenOption[] openOptions;
 
     public WriteController(Path integerFilePath, Path floatFilePath, Path stringFilePath, StandardOpenOption... openOptions) {
@@ -23,7 +23,7 @@ public class WriteController implements AutoCloseable {
     }
 
     public void write(Class<?> type, String value) throws IOException {
-        BufferedWriter writer = writerMap.get(type);
+        BufferedWriter writer = writersMap.get(type);
         if (writer == null) {
             writer = addWriter(type);
         }
@@ -35,10 +35,13 @@ public class WriteController implements AutoCloseable {
         Path path = pathsMap.get(type);
         File file = path.toFile();
         Files.createDirectories(path.getParent());
+        if (!file.exists()) {
+            file.createNewFile();
+        }
 
-        if (file.exists() && file.canWrite()) {
-            writerMap.put(type, Files.newBufferedWriter(pathsMap.get(type), openOptions));
-            return writerMap.get(type);
+        if (file.exists() && file.canWrite()) { // Check file.exists() to ensure that file was successfully created
+            writersMap.put(type, Files.newBufferedWriter(pathsMap.get(type), openOptions));
+            return writersMap.get(type);
         } else {
             if (file.exists()) {
                 throw new IOException("File " + file.getAbsolutePath() + " is not writable");
@@ -50,7 +53,7 @@ public class WriteController implements AutoCloseable {
 
     @Override
     public void close() {
-        for (BufferedWriter writer : writerMap.values()) {
+        for (BufferedWriter writer : writersMap.values()) {
             try {
                 writer.close();
             } catch (IOException _) {} // Ignore
